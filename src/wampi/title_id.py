@@ -22,6 +22,7 @@ TMDB_TV_PREFIX = "tv-"
 """Prefix Watchmode uses for a TMDB TV id."""
 
 
+# TODO: Validate
 def _prefixed(value: str | int, prefix: str) -> str:
     """Return `value` as a string that starts with `prefix`."""
     value = str(value).strip()
@@ -30,6 +31,7 @@ def _prefixed(value: str | int, prefix: str) -> str:
     return f"{prefix}{value}"
 
 
+# TODO: Validate
 def watchmode_title_id(watchmode_id: str | int) -> str:
     """Return the title id for a Watchmode id.
 
@@ -38,21 +40,25 @@ def watchmode_title_id(watchmode_id: str | int) -> str:
     return str(watchmode_id).strip()
 
 
+# TODO: Validate
 def imdb_title_id(imdb_id: str | int) -> str:
     """Return the title id for an IMDB id, adding `tt` if it is missing."""
     return _prefixed(imdb_id, IMDB_PREFIX)
 
 
+# TODO: Validate
 def tmdb_movie_title_id(tmdb_movie_id: str | int) -> str:
     """Return the title id for a TMDB movie id, adding `movie-` if it is missing."""
     return _prefixed(tmdb_movie_id, TMDB_MOVIE_PREFIX)
 
 
+# TODO: Validate
 def tmdb_tv_title_id(tmdb_tv_id: str | int) -> str:
     """Return the title id for a TMDB TV id, adding `tv-` if it is missing."""
     return _prefixed(tmdb_tv_id, TMDB_TV_PREFIX)
 
 
+# TODO: Validate
 def resolve_title_id(
     title_id: str | int | None = None,
     *,

@@ -18,6 +18,7 @@ logger = getLogger(__name__)
 logger.addHandler(NullHandler())
 
 
+# TODO: Validate
 class TitleSources(BaseEndpoint[TitleSourcesModel]):
     """Manage the title sources file.
 
@@ -36,6 +37,7 @@ class TitleSources(BaseEndpoint[TitleSourcesModel]):
 
     _response_model = TitleSourcesModel
 
+    # TODO: Validate
     @override
     def download(
         self,
@@ -92,6 +94,7 @@ class TitleSources(BaseEndpoint[TitleSourcesModel]):
                 err.response,
             ) from err
 
+    # TODO: Validate
     @override
     def download_and_parse(
         self,

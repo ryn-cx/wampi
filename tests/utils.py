@@ -32,6 +32,7 @@ _RESERVED_FILE_NAMES = frozenset(
 """Device names Windows reserves and cannot be used as a file name."""
 
 
+# TODO: Validate
 def sanitized_file_name(name: str | int) -> str:
     """Turn a name into a file name that is valid on Windows.
 
@@ -47,6 +48,7 @@ def sanitized_file_name(name: str | int) -> str:
     return sanitized
 
 
+# TODO: Validate
 def json_path(
     gapi_client: GAPIClient[Any],
     name: str | int,
@@ -64,6 +66,7 @@ def json_path(
     return gapi_client.json_files_folder() / file_name
 
 
+# TODO: Validate
 def json_content[T: BaseModel](
     gapi_client: BaseEndpoint[T, ...],
     name: str | int,
@@ -72,6 +75,7 @@ def json_content[T: BaseModel](
     return json_path(gapi_client, name, category=category).read_text()
 
 
+# TODO: Validate
 def loaded_json(
     gapi_client: BaseEndpoint[Any, ...],
     name: str | int,
@@ -80,18 +84,21 @@ def loaded_json(
     return json.loads(json_content(gapi_client, name, category=category))
 
 
+# TODO: Validate
 @overload
 def parsed_json[T: BaseModel](
     gapi_client: BaseEndpoint[T, ...],
     name: str | int,
     category: Literal["Multipage"],
 ) -> list[T]: ...
+# TODO: Validate
 @overload
 def parsed_json[T: BaseModel](
     gapi_client: BaseEndpoint[T, ...],
     name: str | int,
     category: None = None,
 ) -> T: ...
+# TODO: Validate
 def parsed_json[T: BaseModel](
     gapi_client: BaseEndpoint[T, ...],
     name: str | int,
@@ -103,6 +110,7 @@ def parsed_json[T: BaseModel](
     return gapi_client.parse(data)
 
 
+# TODO: Validate
 def download_and_save(
     gapi_client: GAPIClient[Any],
     name: str | int,
@@ -118,6 +126,7 @@ def download_and_save(
     return file
 
 
+# TODO: Validate
 def assert_error(
     gapi_client: GAPIClient[Any],
     name: str | int,
@@ -132,10 +141,12 @@ def assert_error(
     record_error(gapi_client, name, excinfo.value.response)
 
 
+# TODO: Validate
 def get_error_path(gapi_client: GAPIClient[Any], name: str | int) -> Path:
     return json_path(gapi_client, name, category="Error")
 
 
+# TODO: Validate
 def record_error(
     gapi_client: GAPIClient[Any],
     name: str | int,

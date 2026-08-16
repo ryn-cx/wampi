@@ -18,15 +18,18 @@ if TYPE_CHECKING:
     from wampi import Wampi
 
 
+# TODO: Validate
 class BaseEndpoint[T: BaseModel, **P = ...](GAPIClient[T]):
     """Base class for API endpoints."""
 
     JSON_FILES_ROOT = FILES_PATH
 
+    # TODO: Validate
     def __init__(self, client: Wampi) -> None:
         """Initialize the endpoint with the Wampi client."""
         self._client = client
 
+    # TODO: Validate
     @staticmethod
     def non_default_args(
         func: Callable[..., Any],
@@ -41,6 +44,7 @@ class BaseEndpoint[T: BaseModel, **P = ...](GAPIClient[T]):
             and values[name] != param.default
         }
 
+    # TODO: Validate
     def get_log_id(self, func: Callable[..., Any], values: dict[str, Any]) -> str:
         """Gets the log id.
 
@@ -60,10 +64,12 @@ class BaseEndpoint[T: BaseModel, **P = ...](GAPIClient[T]):
             return name
         return f"{name} ({' '.join(parts)})"
 
+    # TODO: Validate
     @abstractmethod
     def download(self, *args: P.args, **kwargs: P.kwargs) -> list[dict[str, Any]]:
         """Downloads the file."""
 
+    # TODO: Validate
     @abstractmethod
     def download_and_parse(self, *args: P.args, **kwargs: P.kwargs) -> T:
         """Downloads and parses the file."""

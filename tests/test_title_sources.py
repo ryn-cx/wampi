@@ -23,11 +23,13 @@ REGIONS = ["US", "CA"]
 REGIONS_NAME = f"{WATCHMODE_ID} US CA"
 
 
+# TODO: Validate
 @pytest.fixture(scope="session")
 def client(client: Wampi) -> TitleSources:
     return client.title_sources
 
 
+# TODO: Validate
 def test_download(client: TitleSources) -> None:
     download_and_save(
         client,
@@ -36,10 +38,12 @@ def test_download(client: TitleSources) -> None:
     )
 
 
+# TODO: Validate
 def test_download_imdb_id(client: TitleSources) -> None:
     download_and_save(client, IMDB_ID, lambda: client.download(imdb_id=IMDB_ID))
 
 
+# TODO: Validate
 def test_download_tmdb_movie_id(client: TitleSources) -> None:
     download_and_save(
         client,
@@ -48,6 +52,7 @@ def test_download_tmdb_movie_id(client: TitleSources) -> None:
     )
 
 
+# TODO: Validate
 def test_download_tmdb_tv_id(client: TitleSources) -> None:
     download_and_save(
         client,
@@ -56,6 +61,7 @@ def test_download_tmdb_tv_id(client: TitleSources) -> None:
     )
 
 
+# TODO: Validate
 def test_download_regions(client: TitleSources) -> None:
     download_and_save(
         client,
@@ -64,6 +70,7 @@ def test_download_regions(client: TitleSources) -> None:
     )
 
 
+# TODO: Validate
 def test_download_invalid(client: TitleSources) -> None:
     assert_error(
         client,
@@ -73,6 +80,7 @@ def test_download_invalid(client: TitleSources) -> None:
     )
 
 
+# TODO: Validate
 def test_parse(client: TitleSources) -> None:
     data = parsed_json(client, WATCHMODE_ID)
     assert data.root
@@ -84,6 +92,7 @@ def test_parse(client: TitleSources) -> None:
         assert source.region
 
 
+# TODO: Validate
 def test_parse_regions(client: TitleSources) -> None:
     data = parsed_json(client, REGIONS_NAME)
     assert {source.region for source in data.root} <= set(REGIONS)

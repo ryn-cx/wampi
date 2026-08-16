@@ -22,6 +22,7 @@ logger = getLogger(__name__)
 logger.addHandler(NullHandler())
 
 
+# TODO: Validate
 class Wampi:
     """Watchmode API wrapper.
 
@@ -29,6 +30,7 @@ class Wampi:
     is out of scope: https://api.watchmode.com/docs
     """
 
+    # TODO: Validate
     def __init__(
         self,
         api_key: str,
@@ -46,6 +48,7 @@ class Wampi:
 
         self.title_sources = TitleSources(self)
 
+    # TODO: Validate
     def download(
         self,
         endpoint: str,
@@ -82,6 +85,7 @@ class Wampi:
         logger.debug("Downloaded %s (%.4f s)", log_id, time.monotonic() - start)
         return parsed
 
+    # TODO: Validate
     @staticmethod
     def _raise_for_status(response: httpx.Response) -> None:
         """Raises the error that matches the status code of `response`."""
@@ -96,6 +100,7 @@ class Wampi:
         raise HTTPError(response.status_code, body)
 
 
+# TODO: Validate
 def _parsed_or_raw(body: str) -> Any:  # noqa: ANN401 - A response body can be any JSON value.
     """Return `body` parsed as JSON, or the raw text if it is not JSON."""
     try:
