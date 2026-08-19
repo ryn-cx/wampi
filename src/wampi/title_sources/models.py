@@ -34,15 +34,15 @@ class Source(BaseModel):
 
     model_config = ConfigDict(frozen=True, populate_by_name=True)
 
-    id: int = Field(alias="source_id")
+    source_id: int
     name: str
     type: str
     region: str
-    url: str | None = Field(alias="web_url", default=None)
-    format: str | None = None
-    price: float | None = None
-    seasons: int | None = None
-    episodes: int | None = None
+    web_url: str
+    format: str | None
+    price: float | None
+    seasons: int | None
+    episodes: int | None
 
 
 # TODO: Validate
