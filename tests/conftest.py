@@ -1,12 +1,14 @@
 # TODO: Validate
+from __future__ import annotations
+
 import pytest
 from get_around import get_credential
 
 from wampi import Wampi
-from wampi.constants import API_KEY_CREDENTIAL
+
+pytest.register_assert_rewrite("tests.utils")
 
 
-# TODO: Validate
 @pytest.fixture(scope="session")
 def client() -> Wampi:
-    return Wampi(get_credential(API_KEY_CREDENTIAL))
+    return Wampi(get_credential("WATCHMODE_API_KEY"))

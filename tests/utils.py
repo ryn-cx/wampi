@@ -1,163 +1,147 @@
 # TODO: Validate
-"""Utils."""
+"""Helpers shared by every endpoint's tests.
+
+Nothing here knows about a particular endpoint. What an endpoint's own test file
+brings is the ids it downloads, the class it parses into and what it expects to
+find; recording a response and reading it back is the same either way.
+"""
 
 from __future__ import annotations
 
 import json
-import re
-from typing import TYPE_CHECKING, Literal, overload
+from pathlib import Path
+from typing import TYPE_CHECKING, Any, ClassVar
 
 import pytest
 
+from wampi.base_response_model import BaseResponseModel
+
 if TYPE_CHECKING:
     from collections.abc import Callable
-    from pathlib import Path
-    from typing import Any
-
-    from good_ass_pydantic_integrator import GAPIClient
-    from pydantic import BaseModel
-
-    from wampi.base_api_endpoint import BaseEndpoint
-    from wampi.exceptions import WampiError
-
-
-_INVALID_FILE_NAME_CHARS = re.compile(r'[<>:"/\\|?*\x00-\x1f]')
-"""Characters Windows does not allow in a file name."""
-
-_RESERVED_FILE_NAMES = frozenset(
-    {"CON", "PRN", "AUX", "NUL"}
-    | {f"COM{i}" for i in range(1, 10)}
-    | {f"LPT{i}" for i in range(1, 10)},
-)
-"""Device names Windows reserves and cannot be used as a file name."""
 
 
 # TODO: Validate
-def sanitized_file_name(name: str | int) -> str:
-    """Turn a name into a file name that is valid on Windows.
+class RecordedEndpoint:
+    """Reads and writes the recordings a test class owns.
 
-    Invalid characters are replaced with an underscore, trailing dots and spaces
-    are stripped because Windows silently drops them, and reserved device names
-    are suffixed so they stay usable.
+    What tells two recordings of one endpoint apart is the test that asked for
+    them rather than anything in the request, since every test of an endpoint
+    asks for the same thing under a different set of arguments. Subclassing is
+    what says which test that is: the recordings live under the subclass's own
+    name, so nothing has to be told the name or carry it around.
+
+    Never put a `test_` method here. It would be inherited and so would run once
+    per subclass.
     """
-    sanitized = _INVALID_FILE_NAME_CHARS.sub("_", str(name)).rstrip(". ")
-    if not sanitized:
-        return "_"
-    if sanitized.partition(".")[0].upper() in _RESERVED_FILE_NAMES:
-        return f"{sanitized}_"
-    return sanitized
 
+    ENDPOINT: ClassVar[type]
+    """The endpoint whose responses the subclass records."""
 
-# TODO: Validate
-def json_path(
-    gapi_client: GAPIClient[Any],
-    name: str | int,
-    category: Literal["Multipage", "Error"] | None = None,
-) -> Path:
-    file_name = f"{sanitized_file_name(name)}.json"
-    if category:
-        return (
-            gapi_client.json_files_folder().parent
-            / (category + "s")
-            / gapi_client.json_files_folder().stem
-            / file_name
-        )
+    # TODO: Validate
+    @classmethod
+    def _recording_path(cls, folder: str, name: str) -> Path:
+        """Return the path a recording of `name` is kept at."""
+        root = Path(__file__).parent / folder / cls.ENDPOINT.__name__
+        return root / cls.__name__ / f"{name}.json"
 
-    return gapi_client.json_files_folder() / file_name
+    # TODO: Validate
+    @classmethod
+    def recorded_file_path(cls, name: str) -> Path:
+        """Return the path of the recorded file."""
+        return cls._recording_path("_files", name)
 
+    # TODO: Validate
+    @classmethod
+    def recorded_content(cls, name: str) -> list[dict[str, Any]]:
+        """Return the content of the recorded file."""
+        path = cls.recorded_file_path(name)
+        if not path.exists():
+            pytest.skip(f"No recorded response for {name}")
+        content: list[dict[str, Any]] = json.loads(path.read_text(encoding="utf-8"))
+        return content
 
-# TODO: Validate
-def json_content[T: BaseModel](
-    gapi_client: BaseEndpoint[T, ...],
-    name: str | int,
-    category: Literal["Multipage", "Error"] | None = None,
-) -> str:
-    return json_path(gapi_client, name, category=category).read_text()
+    # TODO: Validate
+    @classmethod
+    def new_file_path(cls, name: str) -> Path:
+        """Return the path a response that does not match its recording is put."""
+        return cls._recording_path("_new_files", name)
 
+    # TODO: Validate
+    @classmethod
+    def record_test(
+        cls,
+        name: str,
+        download: Callable[[], list[dict[str, Any]]],
+    ) -> None:
+        """Download a response and check it against what was recorded.
 
-# TODO: Validate
-def loaded_json(
-    gapi_client: BaseEndpoint[Any, ...],
-    name: str | int,
-    category: Literal["Multipage"] | None = None,
-) -> dict[str, Any]:
-    return json.loads(json_content(gapi_client, name, category=category))
+        Writing a recording fails the test rather than skipping it, because what
+        was just written is only whatever the API happened to answer: it has to
+        be read before it can stand in for correct.
 
+        A response that does not match its recording is written to `_new_files`
+        and the test fails. The recording is left alone, so the two can be
+        diffed and the new one moved over the old one once it has been looked
+        at.
+        """
+        path = cls.recorded_file_path(name)
+        downloaded = download()
 
-# TODO: Validate
-@overload
-def parsed_json[T: BaseModel](
-    gapi_client: BaseEndpoint[T, ...],
-    name: str | int,
-    category: Literal["Multipage"],
-) -> list[T]: ...
-# TODO: Validate
-@overload
-def parsed_json[T: BaseModel](
-    gapi_client: BaseEndpoint[T, ...],
-    name: str | int,
-    category: None = None,
-) -> T: ...
-# TODO: Validate
-def parsed_json[T: BaseModel](
-    gapi_client: BaseEndpoint[T, ...],
-    name: str | int,
-    category: Literal["Multipage"] | None = None,
-) -> T | list[T]:
-    data = json.loads(json_content(gapi_client, name, category=category))
-    if category == "Multipage":
-        return [gapi_client.parse(page) for page in data]
-    return gapi_client.parse(data)
+        if not path.exists():
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(json.dumps(downloaded, indent=2), encoding="utf-8")
+            pytest.fail(f"No recorded response for {name}, so it was recorded now")
 
+        new_path = cls.new_file_path(name)
+        if downloaded != json.loads(path.read_text(encoding="utf-8")):
+            new_path.parent.mkdir(parents=True, exist_ok=True)
+            new_path.write_text(json.dumps(downloaded, indent=2), encoding="utf-8")
+            pytest.fail(f"Response for {name} is not what was recorded, see {new_path}")
 
-# TODO: Validate
-def download_and_save(
-    gapi_client: GAPIClient[Any],
-    name: str | int,
-    get: Callable[[], dict[str, Any] | list[dict[str, Any]]],
-    category: Literal["Multipage"] | None = None,
-) -> Path:
-    file = json_path(gapi_client, name, category)
-    if file.exists():
-        msg = f"File already recorded for {type(gapi_client).__name__}/{name}"
-        pytest.skip(msg)
-    file.parent.mkdir(parents=True, exist_ok=True)
-    file.write_text(json.dumps(get(), indent=2))
-    return file
+        # What is in `_new_files` is whatever last failed to match, so a response
+        # that matches again clears it rather than leaving a stale mismatch
+        # behind.
+        new_path.unlink(missing_ok=True)
 
+    # TODO: Validate
+    @classmethod
+    def recorded_model_path(cls, name: str) -> Path:
+        """Return the path of the recorded model dump."""
+        return cls._recording_path("_models", name)
 
-# TODO: Validate
-def assert_error(
-    gapi_client: GAPIClient[Any],
-    name: str | int,
-    download: Callable[[], object],
-    error: type[WampiError],
-) -> None:
-    if json_path(gapi_client, name, "Error").exists():
-        msg = f"File already recorded for {type(gapi_client).__name__}/{name}"
-        pytest.skip(msg)
-    with pytest.raises(error) as excinfo:
-        download()
-    record_error(gapi_client, name, excinfo.value.response)
+    # TODO: Validate
+    @classmethod
+    def recorded_model[ModelT: BaseResponseModel](
+        cls,
+        name: str,
+        model: ModelT,
+    ) -> ModelT:
+        """Return `model` as it was recorded, writing the recording the first time.
 
+        A parse test compares what it read against this rather than against a
+        model it builds from the same response, because a model built from the
+        response mirrors whatever the reading does and cannot disagree with it.
 
-# TODO: Validate
-def get_error_path(gapi_client: GAPIClient[Any], name: str | int) -> Path:
-    return json_path(gapi_client, name, category="Error")
+        Writing a recording fails the test rather than skipping it, because what
+        was just written is only whatever the reading currently produces: it is
+        the thing being checked and has to be read before it can stand in for
+        correct.
+        """
+        path = cls.recorded_model_path(name)
+        if not path.exists():
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(
+                json.dumps(model.model_dump(mode="json"), indent=2),
+                encoding="utf-8",
+            )
+            pytest.fail(f"No recorded model for {name}, so it was recorded now")
+        return type(model).model_validate_json(path.read_text(encoding="utf-8"))
 
+    # TODO: Validate
+    @classmethod
+    def parse_test(cls, name: str, model: type[BaseResponseModel]) -> None:
+        """Read a recorded response and check it against the recorded model."""
+        data = cls.recorded_content(name)
+        parsed = model.from_response(data)
 
-# TODO: Validate
-def record_error(
-    gapi_client: GAPIClient[Any],
-    name: str | int,
-    response: str | dict[str, Any] | None = None,
-) -> None:
-    json_path = get_error_path(gapi_client, name)
-    json_path.parent.mkdir(parents=True, exist_ok=True)
-    if response is None:
-        content = ""
-    elif isinstance(response, str):
-        content = response
-    else:
-        content = json.dumps(response, indent=2)
-    json_path.write_text(content)
+        assert parsed == cls.recorded_model(name, parsed)

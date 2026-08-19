@@ -1,0 +1,93 @@
+[
+  {
+    "source_id": 203,
+    "name": "Netflix",
+    "type": "sub",
+    "region": "US",
+    "ios_url": "Deeplinks available for paid plans only.",
+    "android_url": "Deeplinks available for paid plans only.",
+    "web_url": "https://www.netflix.com/watch/70196252",
+    "format": "4K",
+    "price": null,
+    "seasons": 5,
+    "episodes": 62
+  },
+  {
+    "source_id": 349,
+    "name": "AppleTV",
+    "type": "buy",
+    "region": "US",
+    "ios_url": "Deeplinks available for paid plans only.",
+    "android_url": "Deeplinks available for paid plans only.",
+    "web_url": "https://tv.apple.com/us/episode/umc.cmc.6trodclp7sphpy2gelbgwb4fk?itscg=30200&at=1010layx",
+    "format": "HD",
+    "price": 2.99,
+    "seasons": 5,
+    "episodes": 62
+  },
+  {
+    "source_id": 349,
+    "name": "AppleTV",
+    "type": "buy",
+    "region": "US",
+    "ios_url": "Deeplinks available for paid plans only.",
+    "android_url": "Deeplinks available for paid plans only.",
+    "web_url": "https://tv.apple.com/us/episode/umc.cmc.6trodclp7sphpy2gelbgwb4fk?itscg=30200&at=1010layx",
+    "format": "SD",
+    "price": 1.99,
+    "seasons": 5,
+    "episodes": 62
+  },
+  {
+    "source_id": 307,
+    "name": "Fandango at Home",
+    "type": "buy",
+    "region": "US",
+    "ios_url": "Deeplinks available for paid plans only.",
+    "android_url": "Deeplinks available for paid plans only.",
+    "web_url": "https://www.vudu.com/content/movies/details/content/207577",
+    "format": "HD",
+    "price": 2.99,
+    "seasons": 5,
+    "episodes": 62
+  },
+  {
+    "source_id": 307,
+    "name": "Fandango at Home",
+    "type": "buy",
+    "region": "US",
+    "ios_url": "Deeplinks available for paid plans only.",
+    "android_url": "Deeplinks available for paid plans only.",
+    "web_url": "https://www.vudu.com/content/movies/details/content/207577",
+    "format": "SD",
+    "price": 1.99,
+    "seasons": 5,
+    "episodes": 62
+  },
+  {
+    "source_id": 24,
+    "name": "Amazon",
+    "type": "buy",
+    "region": "US",
+    "ios_url": "Deeplinks available for paid plans only.",
+    "android_url": "Deeplinks available for paid plans only.",
+    "web_url": "https://www.amazon.com/gp/video/detail/amzn1.dv.gti.74a9f71f-3d5a-f492-23dc-3dfbc2404a24",
+    "format": "HD",
+    "price": 3.99,
+    "seasons": 5,
+    "episodes": 62
+  },
+  {
+    "source_id": 24,
+    "name": "Amazon",
+    "type": "buy",
+    "region": "US",
+    "ios_url": "Deeplinks available for paid plans only.",
+    "android_url": "Deeplinks available for paid plans only.",
+    "web_url": "https://www.amazon.com/gp/video/detail/amzn1.dv.gti.74a9f71f-3d5a-f492-23dc-3dfbc2404a24",
+    "format": "SD",
+    "price": 2.99,
+    "seasons": 5,
+    "episodes": 62
+  }
+]

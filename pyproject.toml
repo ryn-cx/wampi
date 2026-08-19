@@ -9,44 +9,42 @@ authors = [
 ]
 dependencies = [
   "get-around",
-  "good-ass-pydantic-integrator",
+  "pydantic>=2",
 ]
 
 [dependency-groups]
 dev = [
-  "get-around",
   "prek>=0.3.2",
   "pytest>=8.4.2",
   "ruff>=0.13.3",
-  "ty>=0.0.58",
+  "ty>=0.0.72",
 ]
 
 [build-system]
 requires = ["uv_build>=0.9.18,<0.10.0"]
 build-backend = "uv_build"
 
-[tool.ty.src]
-exclude = ["**/models.py"]
-
-[[tool.mypy.overrides]]
-module = ["*.models", "models"]
-ignore_errors = true
-
 [tool.ruff.lint]
 select = ["ALL"]
 ignore = [
   "CPY001",  # Copyright information is stored in LICENSE.
+  "D",  # Docstrings are not required.
   "FIX002",  # TODO comments are allowed.
   "TD002",  # TODO comments do not need an author.
   "TD003",  # TODO comments do not need an issue link.
 ]
 
-[tool.ruff.lint.pydocstyle]
-convention = "google"
+extend-select = [
+  "D400",  # Docstring summaries must end with a period.
+  "D401",  # Docstring summaries must be in the imperative mood.
+  "D404",  # Docstring summaries must not start with "This".
+]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**/*.py" = ["S101", "D"]  # Asserts and missing docstrings allowed in tests.
+"tests/**/*.py" = ["S101"]  # Asserts are allowed in tests.
 
 [tool.uv.sources]
 get-around = { git = "https://github.com/ryn-cx/get-around" }
-good-ass-pydantic-integrator = { git = "https://github.com/ryn-cx/good-ass-pydantic-integrator" }
+
+[tool.ty.rules]
+all = "error"

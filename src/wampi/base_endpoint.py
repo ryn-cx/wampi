@@ -1,16 +1,7 @@
-# TODO: Validate
-"""Contains BaseEndpoint."""
-
 from __future__ import annotations
 
-from abc import abstractmethod
 from inspect import Parameter, signature
 from typing import TYPE_CHECKING, Any
-
-from good_ass_pydantic_integrator import GAPIClient
-from pydantic import BaseModel
-
-from wampi.constants import FILES_PATH
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -18,18 +9,13 @@ if TYPE_CHECKING:
     from wampi import Wampi
 
 
-# TODO: Validate
-class BaseEndpoint[T: BaseModel, **P = ...](GAPIClient[T]):
+class BaseEndpoint:
     """Base class for API endpoints."""
 
-    JSON_FILES_ROOT = FILES_PATH
-
-    # TODO: Validate
     def __init__(self, client: Wampi) -> None:
         """Initialize the endpoint with the Wampi client."""
         self._client = client
 
-    # TODO: Validate
     @staticmethod
     def non_default_args(
         func: Callable[..., Any],
@@ -44,9 +30,8 @@ class BaseEndpoint[T: BaseModel, **P = ...](GAPIClient[T]):
             and values[name] != param.default
         }
 
-    # TODO: Validate
     def get_log_id(self, func: Callable[..., Any], values: dict[str, Any]) -> str:
-        """Gets the log id.
+        """Get the log id.
 
         Example: ClassName (arg1='value1' arg2='value2')
         """
@@ -63,13 +48,3 @@ class BaseEndpoint[T: BaseModel, **P = ...](GAPIClient[T]):
         if not parts:
             return name
         return f"{name} ({' '.join(parts)})"
-
-    # TODO: Validate
-    @abstractmethod
-    def download(self, *args: P.args, **kwargs: P.kwargs) -> list[dict[str, Any]]:
-        """Downloads the file."""
-
-    # TODO: Validate
-    @abstractmethod
-    def download_and_parse(self, *args: P.args, **kwargs: P.kwargs) -> T:
-        """Downloads and parses the file."""

@@ -1,15 +1,18 @@
-# TODO: Validate
-"""Contains the TitleSources class."""
+"""Get title streaming sources .
+
+Get all streaming sources where a title is currently available. Returns subscription
+services, rental options, purchase options, and free streaming. For TV shows, includes
+information about available seasons and episodes per source.
+"""
 
 from __future__ import annotations
 
 from logging import NullHandler, getLogger
-from typing import TYPE_CHECKING, Any, override
+from typing import TYPE_CHECKING, overload
 
-from wampi.base_api_endpoint import BaseEndpoint
-from wampi.exceptions import ResourceNotFoundError, TitleNotFoundError
-from wampi.title_id import resolve_title_id
-from wampi.title_sources.models import TitleSourcesModel
+from wampi.base_endpoint import BaseEndpoint
+from wampi.extract_title_id import extract_title_id
+from wampi.title_sources.models import TitleSources
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -18,102 +21,109 @@ logger = getLogger(__name__)
 logger.addHandler(NullHandler())
 
 
-# TODO: Validate
-class TitleSources(BaseEndpoint[TitleSourcesModel]):
-    """Manage the title sources file.
+class GetTitleSources(BaseEndpoint):
+    """Get title streaming sources .
 
-    Every source a title is currently available from, which covers
-    subscription, rental, purchase, free and TV channel app availability. For a
-    TV show a source also reports how many seasons and episodes it carries.
-
-    Wraps `GET /v1/title/{title_id}/sources/`:
-    https://api.watchmode.com/docs#tag/Title/operation/getTitleSources
-
-    The title is identified either by `title_id`, which is used exactly as it
-    is given, or by one of the individual ids, which get the prefix Watchmode
-    expects added for them. Exactly one of them must be given. An IMDB or TMDB
-    id costs two API credits, a Watchmode id costs one.
+    Get all streaming sources where a title is currently available. Returns subscription
+    services, rental options, purchase options, and free streaming. For TV shows, includes
+    information about available seasons and episodes per source.
     """
 
-    _response_model = TitleSourcesModel
+    @overload
+    def fetch(
+        self,
+        title_id: str | int,
+        *,
+        regions: str | Sequence[str] | None = None,
+    ) -> TitleSources: ...
 
-    # TODO: Validate
-    @override
-    def download(
+    @overload
+    def fetch(
+        self,
+        *,
+        watchmode_id: str | int,
+        regions: str | Sequence[str] | None = None,
+    ) -> TitleSources: ...
+
+    @overload
+    def fetch(
+        self,
+        *,
+        imdb_id: str,
+        regions: str | Sequence[str] | None = None,
+    ) -> TitleSources: ...
+
+    @overload
+    def fetch(
+        self,
+        *,
+        tmdb_movie_id: str | int,
+        regions: str | Sequence[str] | None = None,
+    ) -> TitleSources: ...
+
+    @overload
+    def fetch(
+        self,
+        *,
+        tmdb_tv_id: str | int,
+        regions: str | Sequence[str] | None = None,
+    ) -> TitleSources: ...
+
+    def fetch(  # noqa: PLR0913 - Extra parameters make it easier for the caller.
         self,
         title_id: str | int | None = None,
         *,
         watchmode_id: str | int | None = None,
-        imdb_id: str | int | None = None,
+        imdb_id: str | None = None,
         tmdb_movie_id: str | int | None = None,
         tmdb_tv_id: str | int | None = None,
         regions: str | Sequence[str] | None = None,
-    ) -> list[dict[str, Any]]:
-        """Downloads the title sources file.
+    ) -> TitleSources:
+        """Get title streaming sources .
+
+        Get all streaming sources where a title is currently available. Returns
+        subscription services, rental options, purchase options, and free streaming.
+        For TV shows, includes information about available seasons and episodes per
+        source.
 
         Args:
-            title_id: A title id that already carries whatever prefix it needs,
-                for example `345534`, `tt0903747` or `movie-278`.
-            watchmode_id: A Watchmode id, which takes no prefix.
-            imdb_id: An IMDB id, prefixed with `tt` if it is missing.
-            tmdb_movie_id: A TMDB movie id, prefixed with `movie-` if missing.
-            tmdb_tv_id: A TMDB TV id, prefixed with `tv-` if missing.
-            regions: Two letter country codes to limit the sources to, either
-                comma separated or as a sequence. Defaults to every region the
-                API key is enabled for.
+            title_id: Title identifier. Accepts:
+                Watchmode ID (e.g., 345534) - 1 credit
+                IMDB ID (e.g., tt0903747) - 2 credits
+                TMDB format (e.g., movie-278 or tv-1396) - 2 credits
 
-        Returns:
-            The sources as they were downloaded.
+            watchmode_id: Watchmode ID (e.g., 345534) - 1 credit.
+            imdb_id: IMDB ID (e.g., tt0903747 or 0903747) - 2 credits. It is a
+                string only, because the id is zero padded and a number drops
+                the padding.
+            tmdb_movie_id: TMDB movie format (e.g., movie-278 or 278) - 2 credits
+            tmdb_tv_id: TMDB tv format (e.g., tv-1396 or 1396) - 2 credits
+            regions:  Example: regions=US,CA
+
+                Filter by region (2-letter country code). Comma-separated for multiple.
+                Requested regions must be enabled for your plan. If omitted, returns
+                sources from regions enabled for your plan.
+
 
         Raises:
             TitleIdError: If no id or more than one id was given.
-            TitleNotFoundError: If the title does not exist.
+            ResourceNotFoundError: If the title does not exist.
         """
-        log_id = self.get_log_id(self.download, locals())
-        resolved_id = resolve_title_id(
+        log_id = self.get_log_id(self.fetch, locals())
+        title_id = extract_title_id(
             title_id,
             watchmode_id=watchmode_id,
             imdb_id=imdb_id,
             tmdb_movie_id=tmdb_movie_id,
             tmdb_tv_id=tmdb_tv_id,
         )
-        if not isinstance(regions, str) and regions is not None:
+        if regions is not None and not isinstance(regions, str):
             regions = ",".join(regions)
 
-        try:
-            return self._client.download(
-                # The trailing slash is what the documented URL uses.
-                endpoint=f"title/{resolved_id}/sources/",
-                params={"regions": regions},
-                log_id=log_id,
-            )
-        except ResourceNotFoundError as err:
-            raise TitleNotFoundError(
-                resolved_id,
-                err.status_code,
-                err.response,
-            ) from err
-
-    # TODO: Validate
-    @override
-    def download_and_parse(
-        self,
-        title_id: str | int | None = None,
-        *,
-        watchmode_id: str | int | None = None,
-        imdb_id: str | int | None = None,
-        tmdb_movie_id: str | int | None = None,
-        tmdb_tv_id: str | int | None = None,
-        regions: str | Sequence[str] | None = None,
-    ) -> TitleSourcesModel:
-        """Downloads and parses the title sources file."""
-        return self.parse(
-            self.download(
-                title_id,
-                watchmode_id=watchmode_id,
-                imdb_id=imdb_id,
-                tmdb_movie_id=tmdb_movie_id,
-                tmdb_tv_id=tmdb_tv_id,
-                regions=regions,
-            ),
+        data = self._client.download(
+            endpoint=f"title/{title_id}/sources/",
+            params={"regions": regions},
+            log_id=log_id,
         )
+
+        return TitleSources.from_response(data)
