@@ -14,10 +14,10 @@ from typing import TYPE_CHECKING, Any, ClassVar
 
 import pytest
 
-from wampi.base_response_model import BaseResponseModel
-
 if TYPE_CHECKING:
     from collections.abc import Callable
+
+    from wampi.base_response_model import BaseResponseModel
 
 
 # TODO: Validate
@@ -39,20 +39,30 @@ class RecordedEndpoint:
 
     # TODO: Validate
     @classmethod
-    def _recording_path(cls, folder: str, name: str) -> Path:
-        """Return the path a recording of `name` is kept at."""
+    def _recording_path(cls, folder: str, name: str | int) -> Path:
+        """Return the path a recording of `name` is kept at.
+
+        A test class is nested inside the endpoint it covers, so its qualified
+        name already says which endpoint answered and which case was asked for.
+        The recording is filed under that nesting rather than under the class
+        name alone, which two endpoints are free to share.
+
+        What a recording is named after is as often a number as a string, so
+        `name` is taken as either and written out as a string here rather than
+        at every call.
+        """
         root = Path(__file__).parent / folder / cls.ENDPOINT.__name__
-        return root / cls.__name__ / f"{name}.json"
+        return root.joinpath(*cls.__qualname__.split(".")) / f"{name}.json"
 
     # TODO: Validate
     @classmethod
-    def recorded_file_path(cls, name: str) -> Path:
+    def recorded_file_path(cls, name: str | int) -> Path:
         """Return the path of the recorded file."""
         return cls._recording_path("_files", name)
 
     # TODO: Validate
     @classmethod
-    def recorded_content(cls, name: str) -> list[dict[str, Any]]:
+    def recorded_content(cls, name: str | int) -> list[dict[str, Any]]:
         """Return the content of the recorded file."""
         path = cls.recorded_file_path(name)
         if not path.exists():
@@ -62,7 +72,7 @@ class RecordedEndpoint:
 
     # TODO: Validate
     @classmethod
-    def new_file_path(cls, name: str) -> Path:
+    def new_file_path(cls, name: str | int) -> Path:
         """Return the path a response that does not match its recording is put."""
         return cls._recording_path("_new_files", name)
 
@@ -70,7 +80,7 @@ class RecordedEndpoint:
     @classmethod
     def record_test(
         cls,
-        name: str,
+        name: str | int,
         download: Callable[[], list[dict[str, Any]]],
     ) -> None:
         """Download a response and check it against what was recorded.
@@ -105,22 +115,27 @@ class RecordedEndpoint:
 
     # TODO: Validate
     @classmethod
-    def recorded_model_path(cls, name: str) -> Path:
+    def recorded_model_path(cls, name: str | int) -> Path:
         """Return the path of the recorded model dump."""
         return cls._recording_path("_models", name)
 
     # TODO: Validate
     @classmethod
-    def recorded_model[ModelT: BaseResponseModel](
+    def recorded_model_content(
         cls,
-        name: str,
-        model: ModelT,
-    ) -> ModelT:
-        """Return `model` as it was recorded, writing the recording the first time.
+        name: str | int,
+        model: BaseResponseModel,
+    ) -> dict[str, Any]:
+        """Return the recorded dump of `model`, writing the recording the first time.
 
         A parse test compares what it read against this rather than against a
         model it builds from the same response, because a model built from the
         response mirrors whatever the reading does and cannot disagree with it.
+
+        What is returned is the recording as it stands rather than a model read
+        back out of it, since reading it back puts it through the same coercion
+        the parsing does and so hides a value that is written one way and read
+        another.
 
         Writing a recording fails the test rather than skipping it, because what
         was just written is only whatever the reading currently produces: it is
@@ -135,13 +150,23 @@ class RecordedEndpoint:
                 encoding="utf-8",
             )
             pytest.fail(f"No recorded model for {name}, so it was recorded now")
-        return type(model).model_validate_json(path.read_text(encoding="utf-8"))
+        content: dict[str, Any] = json.loads(path.read_text(encoding="utf-8"))
+        return content
 
     # TODO: Validate
     @classmethod
-    def parse_test(cls, name: str, model: type[BaseResponseModel]) -> None:
-        """Read a recorded response and check it against the recorded model."""
-        data = cls.recorded_content(name)
-        parsed = model.from_response(data)
+    def parse_test(cls, name: str | int, model: type[BaseResponseModel]) -> None:
+        """Read a recorded response and check it against the recorded model.
 
-        assert parsed == cls.recorded_model(name, parsed)
+        The reading is the model's own `from_response`, which is what a download
+        ends in too, so the test exercises the same call.
+
+        What the two sides are compared as is what each is written out to rather
+        than as models, so what is checked is every value as it is recorded
+        rather than two models that agree only because reading the recording
+        back undid whatever the parsing did to it.
+        """
+        parsed = model.from_response(cls.recorded_content(name))
+        recorded = cls.recorded_model_content(name, parsed)
+
+        assert parsed.model_dump(mode="json") == recorded

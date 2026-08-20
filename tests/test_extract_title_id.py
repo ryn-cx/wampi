@@ -7,6 +7,7 @@ from wampi.extract_title_id import extract_title_id
 
 TITLE_ID = 12345
 
+
 @pytest.mark.parametrize(
     ("value", "expected"),
     [(TITLE_ID, "12345"), ("12345", "12345")],
@@ -20,7 +21,7 @@ def test_watchmode_id(value: str | int, expected: str) -> None:
     [
         ("12345", "tt12345"),
         ("tt12345", "tt12345"),
-        ("0012345", "tt0012345"), # IMDB uses zero padded numbers.
+        ("0012345", "tt0012345"),  # IMDB uses zero padded numbers.
         ("tt0012345", "tt0012345"),
     ],
 )
